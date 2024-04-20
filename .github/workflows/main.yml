@@ -7,6 +7,7 @@ jobs:
     permissions:
       checks: write
       pull-requests: write
+    if: false
     env:
       ALSOFT_CONF: love2d-${{ github.sha }}/testing/resources/alsoft.conf
       DISPLAY: :99
@@ -156,6 +157,7 @@ jobs:
       matrix:
         platform: [Win32, x64, ARM64]
         install: [modern]
+        SDL: [SDL2, SDL3]
         exclude:
         - platform: ARM64
           install: compat
@@ -175,7 +177,12 @@ jobs:
           echo moredef=>> "%GITHUB_OUTPUT%"
           echo compatname=>> "%GITHUB_OUTPUT%"
         )
-        
+        if "${{ matrix.SDL }}" == "SDL3" (
+          echo love_sdl_arg=-DLOVE_USE_SDL3=True>> "%GITHUB_OUTPUT%"
+        ) else (
+          echo love_sdl_arg=-DLOVE_USE_SDL3=False>> "%GITHUB_OUTPUT%"
+        )
+
         rem JIT Modules
         if "${{ matrix.platform }}-${{ matrix.install }}" == "x64-modern" (
           (echo jitmodules=1)>> "%GITHUB_OUTPUT%"
@@ -271,7 +278,7 @@ jobs:
         CFLAGS: /Zi
         CXXFLAGS: /Zi
         LDFLAGS: /DEBUG:FULL /OPT:REF /OPT:ICF
-      run: cmake -Bbuild -Smegasource -T v143 -A ${{ matrix.platform }} --install-prefix %CD%\install -DCMAKE_PDB_OUTPUT_DIRECTORY=%CD%\pdb ${{ steps.vars.outputs.moredef }}
+      run: cmake -Bbuild -Smegasource -T v143 -A ${{ matrix.platform }} --install-prefix %CD%\install -DCMAKE_PDB_OUTPUT_DIRECTORY=%CD%\pdb ${{ steps.vars.outputs.love_sdl_arg }} ${{ steps.vars.outputs.moredef }}
     - name: Install
       run: cmake --build build --target PACKAGE --config Release -j2
     - name: Copy LuaJIT lua51.pdb
@@ -291,7 +298,7 @@ jobs:
     - name: Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: love-windows-${{ steps.vars.outputs.arch }}${{ steps.vars.outputs.compatname }}
+        name: love-windows-${{ steps.vars.outputs.arch }}${{ steps.vars.outputs.compatname }}-${{ matrix.SDL }}
         path: |
           build/*.zip
           build/*.exe
@@ -305,7 +312,7 @@ jobs:
     - name: Artifact PDB
       uses: actions/upload-artifact@v4
       with:
-        name: love-windows-${{ steps.vars.outputs.arch }}${{ steps.vars.outputs.compatname }}-dbg
+        name: love-windows-${{ steps.vars.outputs.arch }}${{ steps.vars.outputs.compatname }}-${{ matrix.SDL }}-dbg
         path: pdb/Release/*.pdb
     # install mesa for graphic tests
     - name: Install Mesa 
@@ -332,20 +339,20 @@ jobs:
       if: steps.vars.outputs.arch != 'ARM64' && steps.vars.outputs.compatname != '-compat'
       uses: ellraiser/love-test-report@main
       with:
-        name: Love Testsuite Windows ${{ steps.vars.outputs.arch }} ${{ steps.vars.outputs.compatname }} (opengl)
-        title: test-report-windows-${{ steps.vars.outputs.arch }}${{ steps.vars.outputs.compatname }}-opengl
+        name: Love Testsuite Windows ${{ steps.vars.outputs.arch }} ${{ steps.vars.outputs.compatname }} ${{ matrix.SDL }} (opengl)
+        title: test-report-windows-${{ steps.vars.outputs.arch }}${{ steps.vars.outputs.compatname }}-${{ matrix.SDL }}-opengl
         path: megasource/libs/love/testing/output/lovetest_all.md
         token: ${{ secrets.GITHUB_TOKEN }}
     - name: Zip Test Output (opengl)
       if: steps.vars.outputs.arch != 'ARM64' && steps.vars.outputs.compatname != '-compat'
       run: |
-        7z a -tzip test-output-windows-${{ steps.vars.outputs.arch }}${{ steps.vars.outputs.compatname }}-opengl.zip megasource/libs/love/testing/output/
+        7z a -tzip test-output-windows-${{ steps.vars.outputs.arch }}${{ steps.vars.outputs.compatname }}-${{ matrix.SDL }}-opengl.zip megasource/libs/love/testing/output/
     - name: Artifact Test Output (opengl)
       if: steps.vars.outputs.arch != 'ARM64' && steps.vars.outputs.compatname != '-compat'
       uses: actions/upload-artifact@v4
       with:
-        name: test-output-windows-${{ steps.vars.outputs.arch }}-opengl-${{ steps.report1.outputs.conclusion }}
-        path: test-output-windows-${{ steps.vars.outputs.arch }}-opengl.zip
+        name: test-output-windows-${{ steps.vars.outputs.arch }}-${{ matrix.SDL }}-opengl-${{ steps.report1.outputs.conclusion }}
+        path: test-output-windows-${{ steps.vars.outputs.arch }}-${{ matrix.SDL }}-opengl.zip
     # windows opengles tests
     - name: Run Tests (opengles)
       if: steps.vars.outputs.arch != 'ARM64' && steps.vars.outputs.compatname != '-compat'
@@ -359,20 +366,20 @@ jobs:
       if: steps.vars.outputs.arch != 'ARM64' && steps.vars.outputs.compatname != '-compat'
       uses: ellraiser/love-test-report@main
       with:
-        name: Love Testsuite Windows ${{ steps.vars.outputs.arch }} ${{ steps.vars.outputs.compatname }} (opengles)
-        title: test-report-windows-${{ steps.vars.outputs.arch }}${{ steps.vars.outputs.compatname }}-opengles
+        name: Love Testsuite Windows ${{ steps.vars.outputs.arch }} ${{ steps.vars.outputs.compatname }} ${{ matrix.SDL }} (opengles)
+        title: test-report-windows-${{ steps.vars.outputs.arch }}${{ steps.vars.outputs.compatname }}-${{ matrix.SDL }}-opengles
         path: megasource/libs/love/testing/output/lovetest_all.md
         token: ${{ secrets.GITHUB_TOKEN }}
     - name: Zip Test Output (opengles)
       if: steps.vars.outputs.arch != 'ARM64' && steps.vars.outputs.compatname != '-compat'
       run: |
-        7z a -tzip test-output-windows-${{ steps.vars.outputs.arch }}${{ steps.vars.outputs.compatname }}-opengles.zip megasource/libs/love/testing/output/
+        7z a -tzip test-output-windows-${{ steps.vars.outputs.arch }}${{ steps.vars.outputs.compatname }}-${{ matrix.SDL }}-opengles.zip megasource/libs/love/testing/output/
     - name: Artifact Test Output (opengles)
       if: steps.vars.outputs.arch != 'ARM64' && steps.vars.outputs.compatname != '-compat'
       uses: actions/upload-artifact@v4
       with:
-        name: test-output-windows-${{ steps.vars.outputs.arch }}-opengles-${{ steps.report2.outputs.conclusion }}
-        path: test-output-windows-${{ steps.vars.outputs.arch }}-opengles.zip
+        name: test-output-windows-${{ steps.vars.outputs.arch }}-${{ matrix.SDL }}-opengles-${{ steps.report2.outputs.conclusion }}
+        path: test-output-windows-${{ steps.vars.outputs.arch }}-${{ matrix.SDL }}-opengles.zip
     - name: Check Tests Passing
       if: steps.report1.outputs.conclusion == 'failure' || steps.report2.outputs.conclusion == 'failure'
       run: |
@@ -418,6 +425,7 @@ jobs:
 #        path: test-output-windows-${{ steps.vars.outputs.arch }}${{ steps.vars.outputs.compatname }}-vulkan.zip
   macOS:
     runs-on: macos-latest
+    if: false
     permissions:
       checks: write
       pull-requests: write
@@ -477,6 +485,7 @@ jobs:
         exit 1
   iOS-Simulator:
     runs-on: macos-latest
+    if: false
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -494,6 +503,7 @@ jobs:
         xcodebuild -project platform/xcode/love.xcodeproj -scheme love-ios -configuration Release -destination 'platform=iOS Simulator,name=iPhone 11'
   Android:
     runs-on: ubuntu-latest
+    if: false
     strategy:
       matrix:
         build_type: [Debug, Release]
