@@ -1,9 +1,10 @@
 name: continuous-integration
-on: [push, pull_request]
+on: [pull_request]
 
 jobs:
   Linux:
     runs-on: ubuntu-22.04
+    if: false
     permissions:
       checks: write
       pull-requests: write
@@ -311,15 +312,29 @@ jobs:
     - name: Build Test Exe
       if: steps.vars.outputs.arch != 'ARM64'
       run: cmake --build build --config Release --target install
+
+    - name: Download & extract ProcDump
+      if: steps.vars.outputs.arch != 'ARM64'
+      run: |
+        curl -L --output procdump.zip --url https://download.sysinternals.com/files/Procdump.zip
+        7z x procdump.zip -o*
+        mkdir CrashDumpsDir
+
     # windows opengl tests
     - name: Run Tests (opengl)
       if: steps.vars.outputs.arch != 'ARM64'
       env:
         LOVE_GRAPHICS_DEBUG: 1
+        # ProcDump flags (https://learn.microsoft.com/en-us/sysinternals/downloads/procdump)
+        # -accepteula: Accept the Sysinternals license agreement
+        # -mp: Write a 'MiniPlus' dump file.
+        # -b: Treat debug breakpoints as exceptions.
+        # -e: Write a dump when the process encounters an unhandled exception.
+        # -x: DumpFolder Target Args
       run: |
         echo 'check dir'
         ls
-        powershell.exe ./install/lovec.exe ./megasource/libs/love/testing/main.lua --all --isRunner --renderers opengl
+        procdump/procdump.exe -accepteula -mp -b -e -x ./CrashDumpsDir ./install/lovec.exe ./megasource/libs/love/testing/main.lua --all --isRunner --renderers opengl
     - name: Love Test Report (opengl)
       id: report1
       if: steps.vars.outputs.arch != 'ARM64'
@@ -346,7 +361,7 @@ jobs:
         LOVE_GRAPHICS_DEBUG: 1
         LOVE_GRAPHICS_USE_OPENGLES: 1
       run: |
-        powershell.exe ./install/lovec.exe ./megasource/libs/love/testing/main.lua --all --isRunner --renderers opengl
+        procdump/procdump.exe -accepteula -mp -b -e -x ./CrashDumpsDir ./install/lovec.exe ./megasource/libs/love/testing/main.lua --all --isRunner --renderers opengl
     - name: Love Test Report (opengles)
       id: report2
       if: steps.vars.outputs.arch != 'ARM64'
@@ -356,6 +371,14 @@ jobs:
         title: test-report-windows-${{ steps.vars.outputs.arch }}-opengles
         path: megasource/libs/love/testing/output/lovetest_all.md
         token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload CrashDumps
+      if: steps.vars.outputs.arch != 'ARM64'
+      uses: actions/upload-artifact@v4
+      with:
+        name: CrashDumps
+        path: CrashDumpsDir/*.dmp
+
     - name: Zip Test Output (opengles)
       if: steps.vars.outputs.arch != 'ARM64'
       run: |
@@ -411,6 +434,7 @@ jobs:
 #        path: test-output-windows-${{ steps.vars.outputs.arch }}-vulkan.zip
 
   macOS:
+    if: false
     runs-on: macos-latest
     permissions:
       checks: write
@@ -502,6 +526,7 @@ jobs:
         exit 1
 
   iOS-Simulator:
+    if: false
     runs-on: macos-14
     steps:
     - name: Checkout
@@ -522,6 +547,7 @@ jobs:
 
   Android:
     runs-on: ubuntu-latest
+    if: false
     strategy:
       matrix:
         build_type: [Debug, Release]
