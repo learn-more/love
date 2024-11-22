@@ -267,7 +267,7 @@ jobs:
         LDFLAGS: /DEBUG:FULL /OPT:REF /OPT:ICF
       run: cmake -Bbuild -Smegasource -T v143 -A ${{ matrix.platform }} --install-prefix %CD%\install -DCMAKE_PDB_OUTPUT_DIRECTORY=%CD%\pdb -DCMAKE_SYSTEM_VERSION=10.0.22621.0 ${{ steps.vars.outputs.moredef }}
     - name: Install
-      run: cmake --build build --target PACKAGE --config Release -j2
+      run: cmake --build build --parallel --target PACKAGE --config Release -j2
     - name: Copy LuaJIT lua51.pdb
       run: |
         copy /Y build\libs\LuaJIT\src\lua51.pdb pdb\Release\lua51.pdb
@@ -311,7 +311,7 @@ jobs:
     # build love to use for the tests
     - name: Build Test Exe
       if: steps.vars.outputs.arch != 'ARM64'
-      run: cmake --build build --config Release --target install
+      run: cmake --build build --parallel --config Release --target install
 
     - name: Download & extract ProcDump
       if: steps.vars.outputs.arch != 'ARM64'
