@@ -357,7 +357,7 @@ jobs:
         path: test-output-windows-${{ steps.vars.outputs.arch }}-opengl.zip
     # windows opengles tests
     - name: Run Tests (opengles)
-      if: steps.vars.outputs.arch != 'ARM64' and false
+      if: steps.vars.outputs.arch != 'ARM64' && false
       env:
         LOVE_GRAPHICS_DEBUG: 1
         LOVE_GRAPHICS_USE_OPENGLES: 1
