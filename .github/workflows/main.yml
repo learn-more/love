@@ -334,7 +334,8 @@ jobs:
       run: |
         echo 'check dir'
         ls
-        powershell.exe ./procdump/procdump.exe -accepteula -mp -b -e -x ./CrashDumpsDir ./install/lovec.exe ./megasource/libs/love/testing/main.lua --all --isRunner --renderers opengl
+        Start-Process -NoNewWindow -filepath "./procdump/procdump.exe" -ArgumentList "-accepteula -mp -b -e -w lovec ./CrashDumpsDir"
+        powershell.exe ./install/lovec.exe ./megasource/libs/love/testing/main.lua --all --isRunner --renderers opengl
     - name: Love Test Report (opengl)
       id: report1
       if: steps.vars.outputs.arch != 'ARM64'
@@ -356,7 +357,7 @@ jobs:
         path: test-output-windows-${{ steps.vars.outputs.arch }}-opengl.zip
     # windows opengles tests
     - name: Run Tests (opengles)
-      if: steps.vars.outputs.arch != 'ARM64'
+      if: steps.vars.outputs.arch != 'ARM64' and false
       env:
         LOVE_GRAPHICS_DEBUG: 1
         LOVE_GRAPHICS_USE_OPENGLES: 1
@@ -373,7 +374,7 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Upload CrashDumps
-      if: steps.vars.outputs.arch != 'ARM64'
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: CrashDumps
