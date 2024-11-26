@@ -167,6 +167,14 @@ static void print_usage()
 
 static DoneAction runlove(int argc, char **argv, int &retval, love::Variant &restartvalue)
 {
+	if (strcmp(argv[20], ""))
+	{
+		printf("argv[20]: %s\n", argv[20]);
+	}
+	else
+	{
+		printf("argv[20]??: %s\n", argv[20]);
+	}
 	// Oh, you just want the version? Okay!
 	if (argc > 1 && strcmp(argv[1], "--version") == 0)
 	{
