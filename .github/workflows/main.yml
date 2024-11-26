@@ -334,7 +334,7 @@ jobs:
       run: |
         echo 'check dir'
         ls
-        procdump/procdump.exe -accepteula -mp -b -e -x ./CrashDumpsDir ./install/lovec.exe ./megasource/libs/love/testing/main.lua --all --isRunner --renderers opengl
+        ./procdump/procdump.exe -accepteula -mp -b -e -x ./CrashDumpsDir ./install/lovec.exe ./megasource/libs/love/testing/main.lua --all --isRunner --renderers opengl
     - name: Love Test Report (opengl)
       id: report1
       if: steps.vars.outputs.arch != 'ARM64'
@@ -361,7 +361,7 @@ jobs:
         LOVE_GRAPHICS_DEBUG: 1
         LOVE_GRAPHICS_USE_OPENGLES: 1
       run: |
-        procdump/procdump.exe -accepteula -mp -b -e -x ./CrashDumpsDir ./install/lovec.exe ./megasource/libs/love/testing/main.lua --all --isRunner --renderers opengl
+        ./procdump/procdump.exe -accepteula -mp -b -e -x ./CrashDumpsDir ./install/lovec.exe ./megasource/libs/love/testing/main.lua --all --isRunner --renderers opengl
     - name: Love Test Report (opengles)
       id: report2
       if: steps.vars.outputs.arch != 'ARM64'
