@@ -334,6 +334,7 @@ jobs:
       run: |
         echo 'check dir'
         ls
+        ls ./procdump/
         ./procdump/procdump.exe -accepteula -mp -b -e -x ./CrashDumpsDir ./install/lovec.exe ./megasource/libs/love/testing/main.lua --all --isRunner --renderers opengl
     - name: Love Test Report (opengl)
       id: report1
